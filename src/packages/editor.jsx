@@ -1,4 +1,4 @@
-import { defineComponent, computed, inject, ref } from "vue";
+import { defineComponent, computed, inject, ref, h } from "vue";
 import "./editor.scss";
 
 import EditorBlock from "./editor-block";
@@ -10,7 +10,8 @@ import { useBlockDragger } from "./useBlockDragger";
 
 import { ElButton, ElInput } from "element-plus";
 import { useCommand } from "./useCommand";
-
+import { useModal } from "./useModal";
+import { useOperation } from "./useOperation";
 export default defineComponent({
   props: {
     modelValue: { type: Object },
@@ -56,13 +57,18 @@ export default defineComponent({
 
     const { commands } = useCommand(data);
 
+    const { show, close, modal } = useModal(data);
+
+    const { copy, del } = useOperation(data);
     const buttons = [
       { label: "撤销", icon: "icon-back", handler: () => commands.undo() },
       { label: "重做", icon: "icon-back", handler: () => commands.redo() },
+      { label: "JSON", icon: "icon-back", handler: () => show() },
     ];
 
     return () => (
       <div class="editor">
+        {h(modal)}
         <div class="editor-left">
           {/* 根据注册列表，渲染对应的内容，可以实现 h5 的拖拽 */}
           {config.componentList.map((component) => (
@@ -99,6 +105,8 @@ export default defineComponent({
                   block={block}
                   class={block.focus ? "editor-block-focus" : ""}
                   onMousedown={(e) => blockMousedown(e, block, idx)}
+                  onDelete={() => del(idx)}
+                  onCopy={() => copy(block)}
                 >
                   这是一段代码
                 </EditorBlock>
